@@ -31,13 +31,3 @@ data-driven testing, and CLI execution.
 
 ---
 
-## Project Structure
-
-postman-API-automation/
-│
-├── Collections/
-├── Environments/
-├── data/
-├── newman/
-├── .gitignore
-├── README.md
