@@ -1,0 +1,9 @@
+# Ignore Postman environment files (secrets)
+*environment*.json
+updated-env.json
+
+# Newman reports
+newman/reports/
+
+# Node modules
+node_modules/

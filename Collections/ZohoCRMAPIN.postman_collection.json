@@ -1,0 +1,274 @@
+{
+	"info": {
+		"_postman_id": "79d19349-1c02-4c47-a482-ca6017876e7b",
+		"name": "ZohoCRMAPIN",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23954791"
+	},
+	"item": [
+		{
+			"name": "Negative Test Cases",
+			"item": [
+				{
+					"name": "Generate access and refresh token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let res = pm.response.json();\r",
+									"if (res.access_token) {\r",
+									"        pm.environment.set(\"access_token\", res.access_token);\r",
+									"    }\r",
+									"\r",
+									"pm.environment.set(\"refresh_token\", res.refresh_token);\r",
+									"\r",
+									"console.log(\"Token generated:\", res.access_token)\r",
+									"\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"access_token\")) {\r",
+									"    console.log(\"Access token already exists, skipping token generation\");\r",
+									"    pm.execution.setNextRequest(\"Create Lead\");\r",
+									"}else {\r",
+									"    console.log(\"No token found. Generating token.\");\r",
+									"    pm.execution.setNextRequest(\"Generate access and refresh token\");\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "refresh_token",
+									"type": "text"
+								},
+								{
+									"key": "refresh_token",
+									"value": "{{refresh_token}}",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "1000.PPK7CFZD98W44HR5G4G3CCMDXE8AYK",
+									"type": "text"
+								},
+								{
+									"key": "client_secret",
+									"value": "060752713d0fed3a48901ea6cf5d78fc9e80366d49",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://accounts.zoho.in/oauth/v2/token",
+							"protocol": "https",
+							"host": [
+								"accounts",
+								"zoho",
+								"in"
+							],
+							"path": [
+								"oauth",
+								"v2",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Lead",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const res=pm.response.json();\r",
+									"let leadid=res.data[0].details.id;\r",
+									"//pm.environment.set(\"leadId\",leadid);\r",
+									"\r",
+									"console.log(\"LeadID:\",leadid);\r",
+									"\r",
+									"pm.test(\"Status code is 202\", function () {\r",
+									"    pm.response.to.have.status(202);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Create Lead-Mandatory field missing\",()=>{\r",
+									"    const res=pm.response.json();\r",
+									"    pm.expect(res.data[0].code).to.eql(\"MANDATORY_NOT_FOUND\");\r",
+									"    pm.expect(res.data[0].status).to.eql(\"error\");\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Create Invalid_DATA\",()=>{\r",
+									"    const res=pm.response.json();\r",
+									"    pm.expect(res.data[0].code).to.eql(\"INVALID_DATA\");\r",
+									"    pm.expect(res.data[0].status).to.eql(\"error\");\r",
+									"   let api_name = console.log(res.data[0].details.api_name);\r",
+									"    \r",
+									"})\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Zoho-oauthtoken {{access_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"data\": [\r\n    {\r\n      \"Company\": \"ABC Corp\",\r\n      \"First_Name\": \"Tasmia\",\r\n      \"Email\": \"test@abc.com\"\r\n\r\n    }\r\n  ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/crm/v2/Leads",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"crm",
+								"v2",
+								"Leads"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Lead by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204-No Content\", function () {\r",
+									"    pm.response.to.have.status(204);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Check code\",()=>{\r",
+									"const res=pm.response.json();\r",
+									"pm.expect(res.code).to.be.eql(\"INVALID_DATA\");\r",
+									"});\r",
+									"\r",
+									"//INVALID TOKEN\r",
+									"pm.test(\"Status code is 401-Unauthorized\", function () {\r",
+									"    pm.response.to.have.status(401);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Invalid_TOKEN\",()=>{\r",
+									"const res=pm.response.json();\r",
+									"pm.expect(res.code).to.be.eql(\"INVALID_TOKEN\");\r",
+									"pm.expect(res.status).to.be.eql(\"error\");\r",
+									"});\r",
+									"\r",
+									"//Wrong HTTP method. Using Post instead of Get\r",
+									"pm.test(\"Status code is 400-Bad Request\", function () {\r",
+									"    pm.response.to.have.status(400);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"pm.test(\"Invalid_Request_method\",()=>{\r",
+									"const res=pm.response.json();\r",
+									"pm.expect(res.code).to.be.eql(\"INVALID_REQUEST_METHOD\");\r",
+									"pm.expect(res.status).to.be.eql(\"error\");\r",
+									"});\r",
+									"\r",
+									"//Alphabet LeadID and LeadID missing\r",
+									"pm.test(\"Status code is 404- Not found\", function () {\r",
+									"    pm.response.to.have.status(404);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Invalid_Url_Pattern\",()=>{\r",
+									"const res=pm.response.json();\r",
+									"pm.expect(res.code).to.be.eql(\"INVALID_URL_PATTERN\");\r",
+									"pm.expect(res.status).to.be.eql(\"error\");\r",
+									"});\r",
+									"\r",
+									"//Invalid Module\r",
+									"pm.test(\"Invalid_module\",()=>{\r",
+									"const res=pm.response.json();\r",
+									"pm.expect(res.code).to.be.eql(\"INVALID_MODULE\");\r",
+									"pm.expect(res.status).to.be.eql(\"error\");\r",
+									"});\r",
+									"\r",
+									"//Authorization header missing\r",
+									"pm.test(\"Authentication_failure\",()=>{\r",
+									"const res=pm.response.json();\r",
+									"pm.expect(res.code).to.be.eql(\"AUTHENTICATION_FAILURE\");\r",
+									"pm.expect(res.status).to.be.eql(\"error\");\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Zoho-oauthtoken{{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/crm/v2/Leads/{{leadId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"crm",
+								"v2",
+								"Leads",
+								"{{leadId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,617 @@
+{
+	"info": {
+		"_postman_id": "c8a75f25-54a9-446b-978b-356ef8c6381e",
+		"name": "ZohoCRMAPIC",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23954791"
+	},
+	"item": [
+		{
+			"name": "Positive Test Cases",
+			"item": [
+				{
+					"name": "Generate access and refresh token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let res = pm.response.json();\r",
+									"if (res.access_token) {\r",
+									"        pm.environment.set(\"access_token\", res.access_token);\r",
+									"    }\r",
+									"pm.environment.set(\"refresh_token\", res.refresh_token);\r",
+									"\r",
+									"console.log(\"Token generated:\", res.access_token)\r",
+									"\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"access_token\")) {\r",
+									"    console.log(\"Access token already exists, skipping token generation\");\r",
+									"    pm.execution.setNextRequest(\"Create Lead\");\r",
+									"}else {\r",
+									"    console.log(\"No token found. Generating token.\");\r",
+									"    pm.execution.setNextRequest(\"Generate access and refresh token\");\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "refresh_token",
+									"type": "text"
+								},
+								{
+									"key": "refresh_token",
+									"value": "{{refresh_token}}",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "1000.57RAAZ70Q2PCOPGPTOQ83QFVCIN0QK",
+									"type": "text"
+								},
+								{
+									"key": "client_secret",
+									"value": "bb102395ed78cb6508f4b88f5c7ab0b410aacd1437",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://accounts.zoho.in/oauth/v2/token",
+							"protocol": "https",
+							"host": [
+								"accounts",
+								"zoho",
+								"in"
+							],
+							"path": [
+								"oauth",
+								"v2",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Lead",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"  console.log(\"Access token used:\", pm.environment.get(\"access_token\"));\r",
+									"  \r",
+									"  const schema = {\r",
+									"  type: \"object\",\r",
+									"  required: [\"data\"],\r",
+									"  properties: {\r",
+									"    data: {\r",
+									"      type: \"array\",\r",
+									"      required: [\"code\", \"details\", \"message\", \"status\"],\r",
+									"        properties: {\r",
+									"          code: { type: \"string\" },\r",
+									"          message: { type: \"string\" },\r",
+									"          status: { type: \"string\" },\r",
+									"          details: {\r",
+									"            type: \"object\",\r",
+									"            required: [\"id\"],\r",
+									"            properties: {\r",
+									"              id: { type: \"string\" }\r",
+									"            }\r",
+									"          }\r",
+									"        }\r",
+									"      }\r",
+									"    }\r",
+									"  };\r",
+									"\r",
+									"\r",
+									"pm.test(\"Create Lead schema validation\", function () {\r",
+									"    pm.response.to.have.jsonSchema(schema);\r",
+									"});\r",
+									"\r",
+									"const res=pm.response.json();\r",
+									"let leadid=res.data[0].details.id;\r",
+									"console.log(leadid);\r",
+									"pm.environment.set(\"leadId\",leadid);\r",
+									"\r",
+									"pm.test(\"Status code is 201\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Verify code\",()=>{\r",
+									"    const res=pm.response.json();\r",
+									"    pm.expect(res.data[0].code).to.eql(\"SUCCESS\");\r",
+									"})\r",
+									"\r",
+									"\r",
+									"pm.test(\"Created_By name is correct\",()=>{\r",
+									"    const res=pm.response.json();\r",
+									"    pm.expect(res.data[0].details.Created_By.name).to.be.a(\"string\");\r",
+									"    pm.expect(res.data[0].details.Created_By.name).to.eql(\"Tasmia\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Zoho-oauthtoken {{access_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"data\": [\r\n    {\r\n      \"Company\": \"ABC Corp\",\r\n      \"Last_Name\": \"Salman\",\r\n      \"First_Name\": \"Tasmia\",\r\n      \"Email\": \"test@abc.com\"\r\n    }\r\n  ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/crm/v2/Leads",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"crm",
+								"v2",
+								"Leads"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Lead by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"  const schema = {\r",
+									"  type: \"object\",\r",
+									"  required: [\"data\"],\r",
+									"  properties: {\r",
+									"    data: {\r",
+									"      type: \"array\",\r",
+									"      required: [\"Company\",\"Email\",\"id\",\"First_Name\"],\r",
+									"        properties: {\r",
+									"          Company: { type: \"string\" },\r",
+									"          Email: { type: \"string\" },\r",
+									"          id: { type: \"string\" },\r",
+									"          First_Name: {type: \"string\"}\r",
+									"          }\r",
+									"        }\r",
+									"      }\r",
+									"    };\r",
+									"\r",
+									"\r",
+									"\r",
+									"pm.test(\"Get Lead schema validation\", function () {\r",
+									"    pm.response.to.have.jsonSchema(schema);\r",
+									"});\r",
+									"\r",
+									"console.log(\"leadId:\",pm.environment.get(\"leadId\"));\r",
+									"\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Verify First_Name\",()=>{\r",
+									"    const res=pm.response.json();\r",
+									"    pm.expect(res.data[0].First_Name).to.be.a(\"string\");\r",
+									"    pm.expect(res.data[0].First_Name).to.eql(\"Tasmia\");\r",
+									"\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Verify Last_Name\",()=>{\r",
+									"    const res=pm.response.json();\r",
+									"    pm.expect(res.data[0].Last_Name).to.be.a(\"string\");\r",
+									"    pm.expect(res.data[0].Last_Name).to.eql(\"Salman\");\r",
+									"\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Verify Company\",()=>{\r",
+									"    const res=pm.response.json();\r",
+									"    pm.expect(res.data[0].Company).to.be.a(\"string\");\r",
+									"    pm.expect(res.data[0].Company).to.eql(\"ABC Corp\");\r",
+									"\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Verify Email\",()=>{\r",
+									"    const res=pm.response.json();\r",
+									"    pm.expect(res.data[0].Email).to.be.a(\"string\");\r",
+									"    pm.expect(res.data[0].Email).to.eql(\"test@abc.com\");\r",
+									"\r",
+									"});\r",
+									"\r",
+									"//pm.test(\"Status code is 204\", function () {\r",
+									"   // pm.response.to.have.status(204);\r",
+									"//});\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Zoho-oauthtoken {{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/crm/v2/Leads/{{leadId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"crm",
+								"v2",
+								"Leads",
+								"{{leadId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Lead",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"pm.test(\"Code is SUCCESS\",()=>{\r",
+									"    const res=pm.response.json();\r",
+									"    pm.expect(res.data[0].code).to.eql(\"SUCCESS\");\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Verify message\",()=>{\r",
+									"    const res=pm.response.json();\r",
+									"    pm.expect(res.data[0].message).to.eql(\"record updated\");\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Status is success\",()=>{\r",
+									"    const res=pm.response.json();\r",
+									"    pm.expect(res.data[0].status).to.eql(\"success\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Zoho-oauthtoken {{access_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"data\": [\r\n        {\r\n            \"Company\": \"{{Company}}\",\r\n            \"Email\": \"{{Email}}\",\r\n            \"First_Name\": \"{{First_Name}}\",\r\n            \"Last_Name\": \"{{Last_Name}}\"\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/crm/v2/Leads/{{leadId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"crm",
+								"v2",
+								"Leads",
+								"{{leadId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Lead after Update",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Verify First_Name\",()=>{\r",
+									"    let res=pm.response.json();\r",
+									"    let expectedfirstname=pm.iterationData.get(\"First_Name\");\r",
+									"    pm.expect(res.data[0].First_Name).to.be.a(\"string\");\r",
+									"    pm.expect(res.data[0].First_Name).to.eql(expectedfirstname);\r",
+									"\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Verify Last_Name\",()=>{\r",
+									"    let res=pm.response.json();\r",
+									"    let expectedlastname=pm.iterationData.get(\"Last_Name\");\r",
+									"    pm.expect(res.data[0].Last_Name).to.be.a(\"string\");\r",
+									"    pm.expect(res.data[0].Last_Name).to.eql(expectedlastname);\r",
+									"\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Verify Company\",()=>{\r",
+									"    let res=pm.response.json();\r",
+									"    let expectedCompany=pm.iterationData.get(\"Company\");\r",
+									"    pm.expect(res.data[0].Company).to.be.a(\"string\");\r",
+									"    pm.expect(res.data[0].Company).to.eql(expectedCompany);\r",
+									"\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Verify Email\",()=>{\r",
+									"    let res=pm.response.json();\r",
+									"    let expectedEmail=pm.iterationData.get(\"Email\");\r",
+									"    pm.expect(res.data[0].Email).to.be.a(\"string\");\r",
+									"    pm.expect(res.data[0].Email).to.eql(expectedEmail);\r",
+									"\r",
+									"});\r",
+									"\r",
+									"//pm.test(\"Status code is 204\", function () {\r",
+									"   // pm.response.to.have.status(204);\r",
+									"//});\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Zoho-oauthtoken {{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/crm/v2/Leads/{{leadId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"crm",
+								"v2",
+								"Leads",
+								"{{leadId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Lead",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"pm.test(\"Code is SUCCESS\",()=>{\r",
+									"    const res=pm.response.json();\r",
+									"    pm.expect(res.data[0].code).to.eql(\"SUCCESS\");\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Verify message\",()=>{\r",
+									"    const res=pm.response.json();\r",
+									"    pm.expect(res.data[0].message).to.eql(\"record deleted\");\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Status is success\",()=>{\r",
+									"    const res=pm.response.json();\r",
+									"    pm.expect(res.data[0].status).to.eql(\"success\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Zoho-oauthtoken {{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/crm/v2/Leads/{{leadId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"crm",
+								"v2",
+								"Leads",
+								"{{leadId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Lead after Deletion",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Lead Deleted-No response body\",function(){\r",
+									"    pm.expect(pm.response.text()).to.eql(\"\");\r",
+									"})\r",
+									" "
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Zoho-oauthtoken {{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/crm/v2/Leads/{{leadId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"crm",
+								"v2",
+								"Leads",
+								"{{leadId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
