@@ -65,17 +65,17 @@
 								},
 								{
 									"key": "refresh_token",
-									"value": "{{refresh_token}}",
+									"value": "",
 									"type": "text"
 								},
 								{
 									"key": "client_id",
-									"value": "1000.57RAAZ70Q2PCOPGPTOQ83QFVCIN0QK",
+									"value": "",
 									"type": "text"
 								},
 								{
 									"key": "client_secret",
-									"value": "bb102395ed78cb6508f4b88f5c7ab0b410aacd1437",
+									"value": "",
 									"type": "text"
 								}
 							]
